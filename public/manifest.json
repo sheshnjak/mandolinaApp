@@ -1,0 +1,18 @@
+{
+  "short_name": "Mandolina",
+  "name": "Mandolina - Ljestvice i Akordi",
+  "description": "PWA za mandolinu s prikazom ljestvica, akorda, kvintnog kruga i tremolo trenera.",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#050505",
+  "theme_color": "#050505",
+  "display": "standalone",
+  "orientation": "portrait"
+}

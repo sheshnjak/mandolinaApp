@@ -228,12 +228,12 @@ export const Fretboard: React.FC<FretboardProps> = ({
                   id={`open-string-${idx}`}
                 >
                   {isRoot ? (
-                    <div className={`w-6.5 h-6.5 rounded-lg flex items-center justify-center text-[10px] font-extrabold text-white bg-[#F27D26] shadow-[0_0_12px_rgba(242,125,38,0.85)] border border-orange-300/40 relative transition-all duration-150 ${isPlaying ? "scale-115 ring-2 ring-white shadow-[0_0_20px_#F27D26]" : ""}`}>
+                    <div className={`w-7.5 h-7.5 rounded-lg flex items-center justify-center text-[10.5px] font-extrabold text-white bg-[#F27D26] shadow-[0_0_12px_rgba(242,125,38,0.85)] border border-orange-300/40 relative transition-all duration-150 ${isPlaying ? "scale-115 ring-2 ring-white shadow-[0_0_20px_#F27D26]" : ""}`}>
                       {noteInfo.name}
                     </div>
                   ) : isVisible ? (
                     <div 
-                      className={`w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-bold text-white border border-white/20 transition-all duration-150 ${isPlaying ? "scale-115 ring-2 ring-white" : ""}`}
+                      className={`w-7 h-7 rounded-lg flex items-center justify-center text-[10.5px] font-bold text-white border border-white/20 transition-all duration-150 ${isPlaying ? "scale-115 ring-2 ring-white" : ""}`}
                       style={{ 
                         backgroundColor: NOTE_COLORS[noteInfo.name] || "rgba(255, 255, 255, 0.1)",
                         boxShadow: isPlaying 
@@ -244,7 +244,7 @@ export const Fretboard: React.FC<FretboardProps> = ({
                       {noteInfo.name}
                     </div>
                   ) : (
-                    <div className="w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-medium text-white/40 bg-black/40 border border-white/5 group-hover:border-white/20 group-hover:text-white/70 transition">
+                    <div className="w-7 h-7 rounded-lg flex items-center justify-center text-[10px] font-medium text-white/40 bg-black/40 border border-white/5 group-hover:border-white/20 group-hover:text-white/70 transition">
                       {noteInfo.name}
                     </div>
                   )}
@@ -413,7 +413,7 @@ export const Fretboard: React.FC<FretboardProps> = ({
                               animate={{ scale: isPlaying ? 1.15 : 1, opacity: 1 }}
                               transition={{ type: "spring", stiffness: 300, damping: 20 }}
                               onClick={() => handlePlayNote(noteInfo.name, noteInfo.octave)}
-                              className="relative w-6.5 h-6.5 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center text-xs font-black cursor-pointer active:scale-95 z-40 shadow-lg transition-all duration-150"
+                              className="relative w-7.5 h-7.5 sm:w-8.5 sm:h-8.5 rounded-full flex items-center justify-center text-xs font-black cursor-pointer active:scale-95 z-40 shadow-lg transition-all duration-150"
                               style={{ 
                                 backgroundColor: isRoot ? "#F27D26" : (NOTE_COLORS[noteInfo.name] || "rgba(255, 255, 255, 0.1)"),
                                 boxShadow: isPlaying
@@ -433,7 +433,7 @@ export const Fretboard: React.FC<FretboardProps> = ({
                               id={`note-${sIdx}-fret-${fIdx}`}
                             >
                               {isRoot && (
-                                <span className={`absolute -inset-1 rounded-lg border border-[#F27D26]/60 ${isPlaying ? "animate-ping" : ""} opacity-35 pointer-events-none`} />
+                                <span className={`absolute -inset-1 rounded-full border border-[#F27D26]/60 ${isPlaying ? "animate-ping" : ""} opacity-35 pointer-events-none`} />
                               )}
                               <span>
                                 {noteInfo.name}

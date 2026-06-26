@@ -179,29 +179,29 @@ export default function App() {
         </button>
  
         {/* 2. DYNAMIC DROPDOWNS & FILTER TOOLBAR */}
-        <section className="px-3 py-1.5 bg-[#0a0a0c] border-b border-white/5 flex flex-col gap-1.5 z-10">
+        <section className="px-3.5 py-2.5 bg-[#0a0a0c] border-b border-white/5 flex flex-col gap-2 z-10">
           
           {/* Key Selector - Compact Single-row Grid */}
-          <div className="space-y-1">
+          <div className="space-y-1.5">
             <div className="flex justify-between items-center pl-1 pr-8">
-              <label className="text-[9px] font-bold text-white/35 tracking-wider uppercase font-mono">
+              <label className="text-[10px] font-bold text-white/40 tracking-wider uppercase font-mono">
                 {t["root_key"]}
               </label>
-              <span className="text-[9px] font-mono font-bold text-[#F27D26] bg-[#F27D26]/10 px-1 py-0.2 rounded border border-[#F27D26]/15">
+              <span className="text-[10px] font-mono font-extrabold text-[#F27D26] bg-[#F27D26]/12 px-2 py-0.5 rounded border border-[#F27D26]/20">
                 {selectedRoot}
               </span>
             </div>
             
-            <div className="grid grid-cols-12 gap-[2px]">
+            <div className="grid grid-cols-12 gap-[3px]">
               {CHROMATIC_NOTES.map(note => {
                 const isActive = selectedRoot === note;
                 return (
                   <button
                     key={note}
                     onClick={() => setSelectedRoot(note)}
-                    className={`py-1 rounded text-[9.5px] sm:text-[10px] font-bold text-center transition-all cursor-pointer border ${
+                    className={`py-2 rounded-lg text-[11px] sm:text-xs font-black text-center transition-all cursor-pointer border ${
                       isActive
-                        ? "bg-[#F27D26] border-[#F27D26] text-white shadow-[0_0_6px_rgba(242,125,38,0.45)] scale-[1.03]"
+                        ? "bg-[#F27D26] border-[#F27D26] text-white shadow-[0_0_8px_rgba(242,125,38,0.5)] scale-[1.03]"
                         : "bg-[#121214] border-white/5 hover:border-white/10 text-white/50 hover:text-white"
                     }`}
                     id={`key-root-slide-${note}`}
@@ -214,17 +214,17 @@ export default function App() {
           </div>
 
           {/* Scale Selector - 3-Column Touch Grid */}
-          <div className="space-y-1">
+          <div className="space-y-1.5">
             <div className="flex justify-between items-center px-1">
-              <label className="text-[9px] font-bold text-white/35 tracking-wider uppercase font-mono">
+              <label className="text-[10px] font-bold text-white/40 tracking-wider uppercase font-mono">
                 {t["scale_type"]}
               </label>
-              <span className="text-[9px] font-mono font-bold text-[#F27D26] bg-[#F27D26]/10 px-1 py-0.2 rounded border border-[#F27D26]/15">
+              <span className="text-[10px] font-mono font-extrabold text-[#F27D26] bg-[#F27D26]/12 px-2 py-0.5 rounded border border-[#F27D26]/20">
                 {language === "en" ? SCALES[selectedScaleIndex]?.name : SCALES[selectedScaleIndex]?.croatianName}
               </span>
             </div>
 
-            <div className="grid grid-cols-3 gap-1">
+            <div className="grid grid-cols-3 gap-1.5">
               {SCALES.map((scale, idx) => {
                 const isActive = selectedScaleIndex === idx;
                 const displayName = language === "en" ? scale.name : scale.croatianName;
@@ -232,9 +232,9 @@ export default function App() {
                   <button
                     key={idx}
                     onClick={() => setSelectedScaleIndex(idx)}
-                    className={`px-1.5 py-1 rounded text-[9.5px] sm:text-[10px] font-bold text-center transition-all cursor-pointer border truncate ${
+                    className={`px-2 py-2 rounded-lg text-[11px] sm:text-xs font-black text-center transition-all cursor-pointer border truncate ${
                       isActive
-                        ? "bg-[#F27D26] border-[#F27D26] text-white shadow-[0_0_6px_rgba(242,125,38,0.4)]"
+                        ? "bg-[#F27D26] border-[#F27D26] text-white shadow-[0_0_8px_rgba(242,125,38,0.45)]"
                         : "bg-[#121214] border-white/5 hover:border-white/10 text-white/50 hover:text-white"
                     }`}
                     id={`scale-type-slide-${idx}`}
@@ -248,11 +248,11 @@ export default function App() {
 
           {/* Visibility toggle Row - applies to Scales view */}
           {activeTab === "LJESTVICE" && (
-            <div className="flex items-center justify-between bg-black/30 p-1.5 rounded-lg border border-white/5">
-              <span className="text-[8.5px] font-mono font-bold text-white/30 uppercase tracking-widest pl-1">
+            <div className="flex items-center justify-between bg-black/30 p-2 rounded-xl border border-white/5">
+              <span className="text-[9.5px] font-mono font-bold text-white/40 uppercase tracking-widest pl-1">
                 {t["show_notes"]}
               </span>
-              <div className="flex bg-[#121214] p-0.5 rounded border border-white/10">
+              <div className="flex bg-[#121214] p-0.5 rounded-lg border border-white/10">
                 {[
                   { id: "all" as const, label: t["show_all"] },
                   { id: "root" as const, label: t["show_root"] },
@@ -261,7 +261,7 @@ export default function App() {
                   <button
                     key={opt.id}
                     onClick={() => setShowMode(opt.id)}
-                    className={`px-2 py-0.5 text-[8.5px] font-semibold rounded transition cursor-pointer ${
+                    className={`px-3 py-1 text-[10px] sm:text-[10.5px] font-black rounded-md transition cursor-pointer ${
                       showMode === opt.id
                         ? "bg-[#F27D26] text-white shadow-sm shadow-orange-950/20"
                         : "text-white/40 hover:text-white"
@@ -277,7 +277,7 @@ export default function App() {
         </section>
 
         {/* 3. DYNAMIC WORKSPACE (SCROLLABLE AREA) */}
-        <main className="flex-1 overflow-y-auto px-4 py-2.5 space-y-3 pb-20">
+        <main className="flex-1 overflow-y-auto px-4 py-2.5 space-y-3 pb-28">
           <AnimatePresence mode="wait">
             
             {/* A. LJESTVICE (SCALES) PRIMARY VIEW */}
@@ -404,7 +404,7 @@ export default function App() {
         </main>
 
         {/* 4. TACTILE BOTTOM NAVIGATION TABS - PILL/NOTATION ICONS WITH NEW CUSTOM SVG NOTATION ICONS */}
-        <nav className="absolute bottom-0 inset-x-0 bg-[#050505] border-t border-white/10 px-1 py-1 flex justify-between items-center z-20 select-none">
+        <nav className="absolute bottom-0 inset-x-0 bg-[#050505] border-t border-white/10 px-1 py-2 flex justify-between items-center z-20 select-none shadow-[0_-4px_20px_rgba(0,0,0,0.5)]">
           {[
             { id: "LJESTVICE" as TabType, label: t["tab_scales"], icon: ScalesIcon },
             { id: "AKORDI" as TabType, label: t["tab_chords"], icon: ChordsIcon },
@@ -422,16 +422,16 @@ export default function App() {
                   // stop tremolo if moving to another tab
                   synth.stopAll();
                 }}
-                className="flex-1 flex flex-col items-center justify-center py-0.5 transition cursor-pointer"
+                className="flex-1 flex flex-col items-center justify-center py-1 transition cursor-pointer"
                 style={{ touchAction: "manipulation" }}
                 id={`nav-tab-${tab.id}`}
               >
-                <Icon size={18} className={`mb-0.5 transition-all ${
+                <Icon size={20} className={`mb-1 transition-all ${
                   isSelected 
                     ? "text-[#F27D26] scale-105" 
                     : "text-white/35 hover:text-white/60"
                 }`} />
-                <span className={`text-[7.5px] sm:text-[8px] font-black tracking-tight uppercase transition-all ${
+                <span className={`text-[9.5px] sm:text-[10px] font-black tracking-wide uppercase transition-all ${
                   isSelected 
                     ? "text-[#F27D26]" 
                     : "text-white/35 hover:text-white/70"
@@ -441,7 +441,7 @@ export default function App() {
                 {isSelected && (
                   <motion.div
                     layoutId="active-tab-indicator"
-                    className="h-[1.5px] w-3 bg-[#F27D26] rounded-full mt-0.5"
+                    className="h-[1.5px] w-4 bg-[#F27D26] rounded-full mt-0.5"
                     transition={{ type: "spring", stiffness: 350, damping: 25 }}
                   />
                 )}
