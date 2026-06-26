@@ -1,0 +1,6 @@
+{
+  "name": "Mandolina",
+  "description": "Progressive Web App za mandolinu s prikazom ljestvica, akorda, kvintnog kruga, tremolo trenera i obrnutom tražilicom akorda.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
