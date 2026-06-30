@@ -23,7 +23,8 @@ import {
   STANDARD_TUNING, 
   ALTERNATIVE_TUNINGS, 
   Tuning, 
-  TabType 
+  TabType,
+  CHORD_DICTIONARY
 } from "./types";
 import { TRANSLATIONS, LanguageType } from "./translations";
 import { Fretboard } from "./components/Fretboard";
@@ -148,12 +149,51 @@ export default function App() {
     setActiveTab("LJESTVICE");
   };
 
-  // Reset chord overlays when keys/scales change to avoid stale visualizations
+  // Update chord overlays when the selected key changes, preserving the selected chord type if possible
+  const prevRootRef = React.useRef<string>(selectedRoot);
+
   React.useEffect(() => {
-    setActiveChordFrets([0, 2, 3, 0]);
+    const prevRoot = prevRootRef.current;
+    prevRootRef.current = selectedRoot;
+
+    let lastChordType = "Major";
+    if (prevRoot) {
+      const prevKeyChords = CHORD_DICTIONARY[prevRoot] || {};
+      outer: for (const [type, chords] of Object.entries(prevKeyChords)) {
+        for (const chord of chords) {
+          if (chord.frets.join(",") === activeChordFrets.join(",")) {
+            lastChordType = type;
+            break outer;
+          }
+        }
+      }
+    }
+
+    const keyChords = CHORD_DICTIONARY[selectedRoot] || {};
+    const sameTypeChords = keyChords[lastChordType] || [];
+    const firstChord = sameTypeChords[0] || Object.values(keyChords).flat()[0];
+
+    if (firstChord) {
+      setActiveChordFrets(firstChord.frets);
+    } else {
+      setActiveChordFrets([0, 0, 2, 3]); // Fallback to G Major shape
+    }
     setActiveDoubleStopFrets([]);
     setActiveDoubleStopIdx(null);
-  }, [selectedRoot, selectedScaleIndex]);
+  }, [selectedRoot]);
+
+  // Dynamically resolve the active chord's name based on activeChordFrets and selectedRoot
+  const activeChordName = React.useMemo(() => {
+    const keyChords = CHORD_DICTIONARY[selectedRoot] || {};
+    for (const cat of Object.values(keyChords)) {
+      for (const chord of cat) {
+        if (chord.frets.join(",") === activeChordFrets.join(",")) {
+          return chord.name;
+        }
+      }
+    }
+    return undefined;
+  }, [selectedRoot, activeChordFrets]);
 
   return (
     <div className="h-dvh bg-[#020202] text-zinc-100 flex items-center justify-center font-sans md:py-2 px-0 md:px-2 overflow-hidden">
@@ -327,9 +367,7 @@ export default function App() {
                 <Chords
                   rootNote={selectedRoot}
                   onSelectChord={setActiveChordFrets}
-                  selectedChordName={
-                    activeChordFrets.join(",") === "0,2,3,0" && selectedRoot === "C" ? "C Major" : undefined
-                  }
+                  selectedChordName={activeChordName}
                   leftHanded={leftHanded}
                   language={language}
                 />

@@ -5,7 +5,7 @@
 
 import React from "react";
 import { motion } from "motion/react";
-import { CHORD_DICTIONARY, ChordDefinition, CHROMATIC_NOTES, getNoteAtFret } from "../types";
+import { CHORD_DICTIONARY, ChordDefinition, CHROMATIC_NOTES, getNoteAtFret, NOTE_COLORS } from "../types";
 import { synth } from "../audio";
 import { Play, Search, HelpCircle, RefreshCw } from "lucide-react";
 import { TRANSLATIONS } from "../translations";
@@ -34,6 +34,36 @@ export const Chords: React.FC<ChordsProps> = ({
   
   // Reverse Finder State: [G, D, A, E] frets. -1 = Muted, 0 = Open, 1-7 = Fretted
   const [reverseFrets, setReverseFrets] = React.useState<number[]>([0, 0, 2, 3]); // G Major default
+
+  // Auto-sync reverse frets to main fretboard in real-time when in reverse finder tab
+  React.useEffect(() => {
+    if (subTab === "reverse") {
+      onSelectChord(reverseFrets);
+    }
+  }, [reverseFrets, subTab, onSelectChord]);
+
+  // Restore the selected library chord on the main fretboard when returning to library tab
+  React.useEffect(() => {
+    if (subTab === "library") {
+      const keyChords = CHORD_DICTIONARY[rootNote] || {};
+      const firstChord = Object.values(keyChords).flat()[0];
+      if (firstChord) {
+        onSelectChord(firstChord.frets);
+      }
+    }
+  }, [subTab, rootNote, onSelectChord]);
+
+  // Calculate logarithmic fret ratios for realistic layout in Reverse Finder
+  const fretPercentages = React.useMemo(() => {
+    const positions: number[] = [0];
+    const totalFrets = 7 + 1;
+    for (let i = 1; i <= totalFrets; i++) {
+      const ratio = 1 - Math.pow(2, -i / 12);
+      positions.push(ratio);
+    }
+    const maxRatio = positions[totalFrets - 1];
+    return positions.map(pos => (pos / maxRatio) * 100);
+  }, []);
 
   // Fetch chord list for active rootNote
   const availableChords = React.useMemo(() => {
@@ -299,48 +329,292 @@ export const Chords: React.FC<ChordsProps> = ({
             </button>
           </div>
 
-          {/* String-Fret Selection Panel (Interactive Sliders / Drum controls) */}
-          <div className="bg-[#121214] p-4 rounded-xl border border-white/5 space-y-3.5">
-            <div className="grid grid-cols-4 gap-2 text-center">
-              {["G (4)", "D (3)", "A (2)", "E (1)"].map((lbl, idx) => (
-                <div key={idx} className="text-[9px] font-bold text-white/40 font-mono uppercase tracking-wider">
-                  {lbl} {language === "en" ? "Str" : "Žica"}
-                </div>
-              ))}
-            </div>
+          {/* Slikovni interaktivni vrat mandoline */}
+          {(() => {
+            const FRET_COUNT = 7;
+            const fretsArray = Array.from({ length: FRET_COUNT }, (_, i) => i + 1); // [1, 2, 3, 4, 5, 6, 7]
+            const displayIndices = leftHanded ? [3, 2, 1, 0] : [0, 1, 2, 3];
+            const stringsInOrder = ["G3", "D4", "A4", "E5"];
 
-            <div className="grid grid-cols-4 gap-2">
-              {reverseFrets.map((fretVal, stringIdx) => (
-                <div key={stringIdx} className="flex flex-col items-center gap-2">
-                  {/* Up button */}
-                  <button
-                    onClick={() => adjustFret(stringIdx, 1)}
-                    className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 hover:text-[#F27D26] border border-white/10 flex items-center justify-center text-white font-semibold text-sm active:scale-90 transition cursor-pointer"
-                    id={`adjust-up-string-${stringIdx}`}
-                  >
-                    +
-                  </button>
+            return (
+              <div className="bg-[#121214] p-4 rounded-xl border border-white/5 flex flex-col items-center">
+                
+                {/* Visual Fretboard Layout matching main Fretboard component */}
+                <div className="relative w-full flex items-start justify-center" style={{ height: "345px" }}>
+                  
+                  {/* Left Label/Number column (Open/Mute status labels and fret numbers) */}
+                  <div className="relative w-10 select-none" style={{ height: "335px" }}>
+                    {/* Label at the top, matching the h-10 header row height */}
+                    <div className="absolute top-0 left-0 right-0 h-10 flex flex-col items-center justify-center pr-1.5">
+                      <span className="text-[7.5px] font-black text-[#F27D26] uppercase tracking-wider font-mono leading-tight text-right w-full">
+                        {language === "en" ? "OPEN" : "OTVOR"}
+                      </span>
+                      <span className="text-[6.5px] text-white/30 font-mono leading-none mt-0.5 text-right w-full">
+                        {language === "en" ? "MUTE" : "PRIG."}
+                      </span>
+                    </div>
 
-                  {/* Value display */}
-                  <div className="w-12 h-14 bg-[#0a0a0b] border border-white/10 rounded-xl flex flex-col items-center justify-center shadow-inner">
-                    <span className="text-[9px] text-white/30 font-mono">{language === "en" ? "Fret" : "Prag"}</span>
-                    <span className={`text-lg font-black font-mono ${fretVal === -1 ? "text-red-500" : "text-[#F27D26]"}`}>
-                      {fretVal === -1 ? "X" : fretVal}
-                    </span>
+                    {/* Fret numbers container, starting at 40px (top-10) with 295px height */}
+                    <div className="absolute top-10 left-0 right-0 bottom-0">
+                      {fretsArray.map((fretNum) => {
+                        const topPos = (fretPercentages[fretNum - 1] + fretPercentages[fretNum]) / 2;
+                        return (
+                          <div
+                            key={fretNum}
+                            className="absolute right-1.5 flex items-center justify-center w-6.5 h-6.5 rounded-lg bg-[#0a0a0a] border border-white/10 text-[9.5px] font-mono font-bold text-white shadow-md shadow-black/85"
+                            style={{ top: `${topPos}%`, transform: "translateY(-50%)" }}
+                          >
+                            {fretNum}
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
 
-                  {/* Down button */}
-                  <button
-                    onClick={() => adjustFret(stringIdx, -1)}
-                    className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 hover:text-[#F27D26] border border-white/10 flex items-center justify-center text-white font-semibold text-sm active:scale-90 transition cursor-pointer"
-                    id={`adjust-down-string-${stringIdx}`}
-                  >
-                    -
-                  </button>
+                  {/* Fretboard main container (constrained narrow neck like Fretboard.tsx) */}
+                  <div className="relative w-[190px] h-full flex flex-col" style={{ height: "335px" }}>
+                    
+                    {/* String controls on top representing Open / Mute status */}
+                    <div className="flex justify-around w-full h-10 items-center border-b border-white/10 select-none pb-1 px-1">
+                      {displayIndices.map((stringIdx) => {
+                        const fretVal = reverseFrets[stringIdx];
+                        const isMuted = fretVal === -1;
+                        const isOpen = fretVal === 0;
+                        const isFretted = fretVal > 0;
+                        
+                        return (
+                          <button
+                            key={stringIdx}
+                            onClick={() => {
+                              setReverseFrets(prev => {
+                                const updated = [...prev];
+                                // Toggle: if muted, set to open (0), else set to muted (-1)
+                                updated[stringIdx] = prev[stringIdx] === -1 ? 0 : -1;
+                                return updated;
+                              });
+                            }}
+                            className={`w-7.5 h-7.5 rounded-lg flex flex-col items-center justify-center transition active:scale-95 cursor-pointer relative z-40 border ${
+                              isOpen
+                                ? "bg-[#F27D26]/20 border-[#F27D26] text-[#F27D26] shadow-[0_0_8px_rgba(242,125,38,0.25)]"
+                                : isFretted
+                                ? "bg-[#F27D26]/12 border-[#F27D26]/60 text-white shadow-[0_0_8px_rgba(242,125,38,0.15)]"
+                                : "bg-black/40 border-red-500/20 text-red-500/80"
+                            }`}
+                            title={isOpen ? "Open" : isMuted ? "Muted" : `Fret ${fretVal}`}
+                            id={`reverse-open-mute-btn-${stringIdx}`}
+                          >
+                            <span className="text-[10px] font-black font-mono leading-tight">
+                              {isOpen ? "O" : isMuted ? "✕" : fretVal}
+                            </span>
+                            <span className="text-[6px] font-mono opacity-60 uppercase leading-none mt-0.5">
+                              {isOpen 
+                                ? (language === "en" ? "open" : "otv") 
+                                : isMuted 
+                                ? (language === "en" ? "mute" : "prig") 
+                                : (language === "en" ? "fret" : "prg")}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* Fretboard Neck with rich warm rosewood wood background */}
+                    <div 
+                      className="relative flex-1 w-full bg-[#2e1d13] border-x border-white/15 shadow-2xl overflow-hidden rounded-b-md"
+                      style={{
+                        backgroundImage: `
+                          linear-gradient(90deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 18%, rgba(0,0,0,0) 82%, rgba(0,0,0,0.8) 100%),
+                          linear-gradient(180deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0) 100%)
+                        `,
+                        height: "295px"
+                      }}
+                    >
+                      {/* Wood grain */}
+                      <div 
+                        className="absolute inset-0 opacity-60 pointer-events-none" 
+                        style={{
+                          backgroundImage: `
+                            repeating-linear-gradient(90deg, 
+                              #150905 0px, #150905 1.5px, 
+                              transparent 1.5px, transparent 14px, 
+                              #1d0d07 15px, #1d0d07 16px, 
+                              transparent 16px, transparent 36px
+                            ),
+                            repeating-linear-gradient(86deg, 
+                              #190a04 0px, #190a04 1px, 
+                              transparent 1px, transparent 18px, 
+                              #241109 19px, #241109 20px, 
+                              transparent 20px, transparent 40px
+                            )
+                          `,
+                          mixBlendMode: "multiply"
+                        }} 
+                      />
+
+                      {/* Pearl Position Markers on frets 3, 5, 7 */}
+                      {[3, 5, 7].map(f => {
+                        const topPos = (fretPercentages[f - 1] + fretPercentages[f]) / 2;
+                        return (
+                          <div
+                            key={`dot-reverse-${f}`}
+                            className="absolute left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-white/45 border border-white/20 shadow-[inset_1px_1px_2px_rgba(0,0,0,0.9),0_0_6px_rgba(255,255,255,0.35)] opacity-90 z-0"
+                            style={{ top: `${topPos}%` }}
+                          />
+                        );
+                      })}
+
+                      {/* Nut */}
+                      <div 
+                        className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-b from-[#f8fafc] via-[#f1f5f9] to-[#cbd5e1] border-b border-zinc-900 z-10 shadow-[0_1.5px_3px_rgba(0,0,0,0.9)]" 
+                        style={{ borderRadius: "1px 1px 0 0" }}
+                      />
+
+                      {/* Fret wires (Horizontal 3D metal silver lines) */}
+                      {fretPercentages.map((percentage, idx) => {
+                        if (idx === 0) return null; // skip nut
+                        return (
+                          <div
+                            key={`fret-reverse-${idx}`}
+                            className="absolute left-0 right-0 h-[3px] z-10"
+                            style={{ 
+                              top: `${percentage}%`,
+                              background: "linear-gradient(to bottom, #475569 0%, #cbd5e1 30%, #ffffff 50%, #64748b 80%, #1e293b 100%)",
+                              boxShadow: "0 1px 2px rgba(0,0,0,0.8), 0 -0.5px 0.5px rgba(0,0,0,0.5)"
+                            }}
+                          />
+                        );
+                      })}
+
+                      {/* Double Strings (4 courses with realistic dimensions & silvery steel gradients) */}
+                      <div className="absolute inset-0 flex justify-around px-1 pointer-events-none z-20">
+                        {displayIndices.map((stringIdx) => {
+                          let stringStyle: React.CSSProperties = {};
+                          let stringWidth = "w-[1px]";
+                          
+                          if (stringIdx === 0) {
+                            // G: Thickest silver steel course
+                            stringWidth = "w-[2.4px]";
+                            stringStyle = {
+                              background: "linear-gradient(90deg, #374151 0%, #9ca3af 20%, #f8fafc 45%, #e2e8f0 60%, #9ca3af 75%, #374151 100%)",
+                              boxShadow: "0.5px 0 2.5px rgba(0,0,0,0.9)"
+                            };
+                          } else if (stringIdx === 1) {
+                            // D: Medium silver steel course
+                            stringWidth = "w-[1.8px]";
+                            stringStyle = {
+                              background: "linear-gradient(90deg, #4b5563 0%, #cbd5e1 25%, #f8fafc 50%, #cbd5e1 75%, #4b5563 100%)",
+                              boxShadow: "0.5px 0 2px rgba(0,0,0,0.85)"
+                            };
+                          } else if (stringIdx === 2) {
+                            // A: Thin silver steel course
+                            stringWidth = "w-[1.1px]";
+                            stringStyle = {
+                              background: "linear-gradient(90deg, #64748b 0%, #e2e8f0 35%, #ffffff 50%, #cbd5e1 65%, #475569 100%)",
+                              boxShadow: "0.5px 0 1.5px rgba(0,0,0,0.8)"
+                            };
+                          } else {
+                            // E: Thinnest silver steel course
+                            stringWidth = "w-[0.8px]";
+                            stringStyle = {
+                              background: "linear-gradient(90deg, #94a3b8 0%, #f1f5f9 50%, #475569 100%)",
+                              boxShadow: "0.5px 0 1px rgba(0,0,0,0.75)"
+                            };
+                          }
+
+                          return (
+                            <div key={`course-reverse-${stringIdx}`} className="h-full flex gap-[2.4px] justify-center items-center opacity-95">
+                              {/* Double string 1 */}
+                              <div className={`h-full ${stringWidth}`} style={stringStyle} />
+                              {/* Double string 2 */}
+                              <div className={`h-full ${stringWidth}`} style={stringStyle} />
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* Clickable Note Badges Layer & Interactive tap overlay */}
+                      <div className="absolute inset-0 flex justify-around px-1 z-30 h-full">
+                        {displayIndices.map((stringIdx) => {
+                          const stringBase = stringsInOrder[stringIdx];
+                          return (
+                            <div key={`notes-course-reverse-${stringIdx}`} className="h-full flex flex-col justify-between relative" style={{ width: "24px" }}>
+                              {fretsArray.map((fretNum) => {
+                                const isActive = reverseFrets[stringIdx] === fretNum;
+                                const noteInfo = getNoteAtFret(stringBase, fretNum);
+                                const isRoot = noteInfo.name === rootNote;
+                                
+                                const topStart = fretPercentages[fretNum - 1];
+                                const topEnd = fretPercentages[fretNum];
+                                const height = topEnd - topStart;
+
+                                const style: React.CSSProperties = {
+                                  position: "absolute",
+                                  top: `${topStart}%`,
+                                  height: `${height}%`,
+                                  width: "100%",
+                                  left: "0"
+                                };
+
+                                return (
+                                  <button
+                                    key={`${fretNum}-${stringIdx}`}
+                                    onClick={() => {
+                                      setReverseFrets(prev => {
+                                        const updated = [...prev];
+                                        // Toggle behavior: if already active, set to -1 (muted). Otherwise, set to this fret.
+                                        updated[stringIdx] = isActive ? -1 : fretNum;
+                                        return updated;
+                                      });
+                                    }}
+                                    style={style}
+                                    className="w-full relative focus:outline-none cursor-pointer flex items-center justify-center group"
+                                    id={`reverse-fret-cell-${stringIdx}-${fretNum}`}
+                                    title={`${noteInfo.name}${noteInfo.octave}`}
+                                  >
+                                    {/* Hover glow */}
+                                    <span className="absolute inset-0 bg-white/0 group-hover:bg-[#F27D26]/5 transition-all pointer-events-none" />
+
+                                    {/* Glowing Note Marker matching Fretboard.tsx note design */}
+                                    {isActive ? (
+                                      <motion.div
+                                        layoutId={`reverse-marker-${stringIdx}`}
+                                        initial={{ scale: 0.5, opacity: 0 }}
+                                        animate={{ scale: 1, opacity: 1 }}
+                                        className="relative w-7.5 h-7.5 sm:w-8.5 sm:h-8.5 rounded-full flex items-center justify-center text-xs font-black shadow-lg transition-all duration-150 z-40"
+                                        style={{ 
+                                          backgroundColor: isRoot ? "#F27D26" : (NOTE_COLORS[noteInfo.name] || "rgba(255, 255, 255, 0.1)"),
+                                          boxShadow: isRoot 
+                                            ? "0 0 16px rgba(242,125,38,0.85), inset 0 1px 1px rgba(255,255,255,0.4)"
+                                            : `0 2px 5px rgba(0,0,0,0.7), 0 0 12px ${NOTE_COLORS[noteInfo.name] || "rgba(255,255,255,0.15)"}, inset 0 1px 1px rgba(255,255,255,0.2)`,
+                                          border: isRoot ? "1.5px solid rgba(255, 255, 255, 0.6)" : "1px solid rgba(255, 255, 255, 0.25)",
+                                          color: "rgba(255, 255, 255, 0.95)",
+                                          textShadow: "0 1px 2px rgba(0,0,0,0.6)",
+                                        }}
+                                      >
+                                        <span>{noteInfo.name}</span>
+                                      </motion.div>
+                                    ) : (
+                                      // Discovery preview mode on hover
+                                      <span className="opacity-0 group-hover:opacity-40 text-[9px] font-mono text-white/50 transition">
+                                        {noteInfo.name}
+                                      </span>
+                                    )}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                    </div>
+
+                  </div>
                 </div>
-              ))}
-            </div>
-          </div>
+
+              </div>
+            );
+          })()}
 
           {/* Results Analysis Panel */}
           <div className="bg-gradient-to-br from-[#121214] to-[#0a0a0b] p-4 rounded-xl border border-white/10 shadow-md space-y-3">

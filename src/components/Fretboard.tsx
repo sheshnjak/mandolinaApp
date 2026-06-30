@@ -124,7 +124,7 @@ export const Fretboard: React.FC<FretboardProps> = ({
     const activeNotesList: { stringIndex: number; fret: number; name: string; octave: number }[] = [];
 
     // Collect all active/visible notes on the fretboard from lowest course (G) to highest (E)
-    stringsInOrder.forEach((stringBase, sIdx) => {
+    tuning.notes.forEach((stringBase, sIdx) => {
       // Search from fret 0 (open) to 7
       for (let f = 0; f <= fretCount; f++) {
         const noteInfo = getNoteAtFret(stringBase, f);
@@ -215,9 +215,10 @@ export const Fretboard: React.FC<FretboardProps> = ({
           <div className="flex justify-around w-full h-10 items-center border-b border-white/10 select-none pb-1 px-1">
             {stringsInOrder.map((stringBase, idx) => {
               const noteInfo = getNoteAtFret(stringBase, 0);
-              const isVisible = shouldShowNote(idx, 0, noteInfo.name);
+              const originalIdx = tuning.notes.indexOf(stringBase);
+              const isVisible = shouldShowNote(originalIdx, 0, noteInfo.name);
               const isRoot = noteInfo.name === rootNote;
-              const isPlaying = activePlayingNode?.stringIndex === idx && activePlayingNode?.fret === 0;
+              const isPlaying = activePlayingNode?.stringIndex === originalIdx && activePlayingNode?.fret === 0;
               
               return (
                 <button
@@ -373,9 +374,10 @@ export const Fretboard: React.FC<FretboardProps> = ({
               })}
             </div>
 
-            {/* Clickable Note Badges Layer */}
+             {/* Clickable Note Badges Layer */}
             <div className="absolute inset-0 flex justify-around px-1 z-30 h-full">
               {stringsInOrder.map((stringBase, sIdx) => {
+                const originalIdx = tuning.notes.indexOf(stringBase);
                 return (
                   <div key={`notes-course-${sIdx}`} className="h-full flex flex-col justify-between relative" style={{ width: "24px" }}>
                     
@@ -383,9 +385,9 @@ export const Fretboard: React.FC<FretboardProps> = ({
                     {Array.from({ length: fretCount }).map((_, idx) => {
                       const fIdx = idx + 1;
                       const noteInfo = getNoteAtFret(stringBase, fIdx);
-                      const isVisible = shouldShowNote(sIdx, fIdx, noteInfo.name);
+                      const isVisible = shouldShowNote(originalIdx, fIdx, noteInfo.name);
                       const isRoot = noteInfo.name === rootNote;
-                      const isPlaying = activePlayingNode?.stringIndex === sIdx && activePlayingNode?.fret === fIdx;
+                      const isPlaying = activePlayingNode?.stringIndex === originalIdx && activePlayingNode?.fret === fIdx;
 
                       // Position notes in the center of their respective fret spaces
                       const topStart = fretPercentages[fIdx - 1];
